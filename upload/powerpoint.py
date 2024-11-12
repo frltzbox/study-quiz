@@ -23,7 +23,10 @@ def describe_pptx(pptx_path):
 
     slide_content = []
     response = []
-    client = Groq(api_key='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')
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+
+    # Initialize the Groq client
+    client = Groq(api_key=GROQ_API_KEY)
     summary_instruction = "fasse die folgenden informationen auf deutsch zusammen ohne informationen hinzuzufügen"
 
     # Loop through each slide in the presentation

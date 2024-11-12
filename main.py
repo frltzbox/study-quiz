@@ -1,6 +1,5 @@
 from markdown_pdf import MarkdownPdf
 import streamlit as st
-from audio_recorder_streamlit import audio_recorder
 import os
 from groq import Groq
 from dotenv import load_dotenv
@@ -13,14 +12,13 @@ import numpy as np
 import streamlit as st
 import time
 from pydub import AudioSegment
-from md2pdf.core import md2pdf
 from spire.doc import *
 from spire.doc.common import *
 from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 import re
 import pandas as pd
 from io import StringIO
-from presentation import pdfinfo
+from upload import pdf
 
 # Set parameters
 sample_rate = 44100  # Sample rate in Hertz (CD quality)
@@ -211,7 +209,7 @@ if st.button("Fragen und Transkript generieren"):
     if uploaded_file is not None:
         bytes_data = uploaded_file.getvalue()
         pdf_description = "Mit der folgenden zusammenfassung der präsentationsfolien: "
-        pdf_description = pdf_description + pdfinfo(bytes_data)
+        pdf_description = pdf_description + pdf.pdfinfo(bytes_data)
         text = text + pdf_description
 
     if len(text) < 50:

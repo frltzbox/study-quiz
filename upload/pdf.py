@@ -27,14 +27,18 @@ def encode_image(image_path):
 
 
 def pdfinfo(pdf):
-    newpath = r'/images' 
+    GROQ_API_KEY = os.getenv('GROQ_API_KEY')
+    # Initialize the Groq client
+    client = Groq(api_key=GROQ_API_KEY)
+
+    newpath = 'pdfimages' 
     if not os.path.exists(newpath):
         os.makedirs(newpath)
-    file = open('text.pdf', 'wb')
-    file.write(pdf)
-    file.close()
     dirname = os.path.dirname(__file__)
     pdf_path = os.path.join(dirname, 'text.pdf')
+    file = open(pdf_path, 'wb')
+    file.write(pdf)
+    file.close()
     image_directory_path = os.path.join(dirname, newpath)
     # Beispiel für die Verwendung des Programms
     pdf_to_png_with_pymupdf(pdf_path, image_directory_path)
@@ -50,7 +54,7 @@ def pdfinfo(pdf):
 
 
 
-    client = Groq(api_key='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')
+    client = Groq(api_key=GROQ_API_KEY)
     response = ""
     for i in base64_images:
         chat_completion = client.chat.completions.create(
@@ -82,11 +86,9 @@ def pdfinfo(pdf):
 
         ],
 
-    model="llama-3.2-11b-vision-preview",
+        model="llama-3.2-11b-vision-preview",
 
-)
+        )
         response = response + chat_completion.choices[0].message.content
     os.remove(pdf_path)
     return response
-
-

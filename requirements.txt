@@ -1,0 +1,10 @@
+streamlit
+groq
+python-pptx
+pymupdf
+python-dotenv
+sounddevice
+pydub
+youtube-transcript-api
+Spire.Doc
+frontend 
