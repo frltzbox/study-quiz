@@ -104,4 +104,3 @@ def describe_pptx(pptx_path):
     return response
 
 
-print(describe_pptx(r'C:\Users\Jonas\Programme\mint-ec-camp-24\tag_2\schlacht-bei-tannenberg(1).pptx'))

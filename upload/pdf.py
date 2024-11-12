@@ -2,6 +2,7 @@ import fitz  # PyMuPDF
 import os
 from groq import Groq
 import base64
+import shutil
 
 
 def pdf_to_png_with_pymupdf(pdf_path, output_folder):
@@ -66,7 +67,7 @@ def pdfinfo(pdf):
 
                 "content": [
 
-                    {"type": "text", "text": "Beschreibe den Inhalt dieser Seite in maximal 100 wörtern"},
+                    {"type": "text", "text": "Beschreibe den Inhalt dieser Seite ohne informationen hinzuzufügen"},
 
                     {
 
@@ -90,5 +91,17 @@ def pdfinfo(pdf):
 
         )
         response = response + chat_completion.choices[0].message.content
+    chat_completion = client.chat.completions.create(
+            messages=[{
+
+                        "role": "user",
+
+                        "content": "fasse die folgende zusammenfassung möglichst kurz zusammen, ohne informationen hizuzufügen"+response,
+                    }],
+
+            model="llama3-8b-8192",
+        )
     os.remove(pdf_path)
-    return response
+    shutil.rmtree(image_directory_path)
+    print(chat_completion.choices[0].message.content)
+    return chat_completion.choices[0].message.content

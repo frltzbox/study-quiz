@@ -85,16 +85,23 @@ Antworte nur mit einem JSON-Objekt im folgenden Format:
     ]
 }}
 """
-
-    chat_completion = client.chat.completions.create(
-        model="llama3-groq-70b-8192-tool-use-preview",
-        messages=[
-            {"role": "system", "content": "Du bist ein hilfreicher Assistent, der Fragen und Antworten zu einem gegebenen Transkript generiert."},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=0.6,
-        max_tokens=500
-    )
+    answer_received = False
+    #Since we're sending other requests as well, wait in case token limit per minute is reached
+    while answer_received == False:
+        try:
+            chat_completion = client.chat.completions.create(
+                model="llama3-groq-70b-8192-tool-use-preview",
+                messages=[
+                    {"role": "system", "content": "Du bist ein hilfreicher Assistent, der Fragen und Antworten zu einem gegebenen Transkript generiert."},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=0.6,
+                max_tokens=500
+            )
+            answer_received = True
+        except:
+            print("Waiting for token limit to cool down")
+            time.sleep(15)
 
     return chat_completion.choices[0].message.content
 
