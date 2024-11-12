@@ -19,6 +19,7 @@ This application provides tools for extracting and transcribing audio from uploa
 ## Features
 
 - **Audio Recording and Upload**: Directly record audio or upload audio files in WAV or MP3 format.
+- **Upload PDF files**: Add PDF files, which contents will be included in the summary and questions.
 - **YouTube Transcript Extraction**: Provide a YouTube URL to extract video transcripts (supports German and English).
 - **Question Generation**: Generate a customizable set of questions based on the transcript to enhance study engagement.
 - **Markdown Formatting**: Automatically format transcripts in readable markdown.
@@ -31,7 +32,7 @@ Ensure you have the following libraries installed:
 - `streamlit`
 - `markdown_pdf`
 - `audio_recorder_streamlit`
-- `dotenv`
+- `dotenv-python`
 - `sounddevice`
 - `scipy`
 - `numpy`
@@ -61,7 +62,7 @@ Ensure you have the following libraries installed:
 
 Run the application using Streamlit:
 ```bash
-streamlit run app.py
+streamlit run main.py
 ```
 
 This will open a web interface where you can:
