@@ -29,10 +29,7 @@ processing = False
 
 load_dotenv()
 
-GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-
-# Initialize the Groq client
-client = Groq(api_key=GROQ_API_KEY)
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY", None)
 
 def extract_youtube_video_id(url: str) -> str:
     """
@@ -128,6 +125,16 @@ st.set_page_config(page_title='Study Quiz', page_icon='logo.jpeg')
 # Set page title
 st.title('Study Quiz')
 
+if not GROQ_API_KEY:
+    with st.sidebar:
+        groq_api_key = st.text_input("Enter your Groq API Key (gsk_yA...):", "", type="password")
+        st.markdown("*Get your free API key at [console.groq.com/keys](https://console.groq.com/keys)*")
+        # Initialize the Groq client
+        client = Groq(api_key=groq_api_key)
+else:
+    # Initialize the Groq client
+    client = Groq(api_key=GROQ_API_KEY)
+    
 # Create a toggle for recording
 col1, col2 = st.columns([1, 3])
 
