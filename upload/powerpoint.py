@@ -10,6 +10,10 @@ def encode_image(image_path):
   with open(image_path, "rb") as image_file:
     return base64.b64encode(image_file.read()).decode('utf-8')
 
+def encode_image_from_stream(image_stream):
+    return base64.b64encode(image_stream.getvalue()).decode('utf-8')
+
+
 
 def describe_pptx(pptx_path):
     # Load the PowerPoint presentation
@@ -41,9 +45,7 @@ def describe_pptx(pptx_path):
             elif shape.shape_type == MSO_SHAPE_TYPE.PICTURE:
                 #TODO: store images on one slide into an array and do the request after finishing process all text on the same slide
                 image_stream = io.BytesIO(shape.image.blob)  # Read image data from shape
-                slide_image = Image.open(image_stream)
-                slide_image.save(os.path.join(image_directory_path,'slide.png'))
-                base64_image = encode_image(os.path.join(image_directory_path,'slide.png'))
+                base64_image = encode_image_from_stream(image_stream)
 
                 #API request
                 chat_completion = client.chat.completions.create(
@@ -98,8 +100,8 @@ def describe_pptx(pptx_path):
             model="llama3-8b-8192",
           )
           response.append(chat_completion.choices[0].message.content)
-        except:
-          Raise Exception("Something went wrong with the summary API request")
+        except Exception as e:
+          print(f"Error during summary API request: {e}")
         summary_input.clear()
         slide_content.clear()
     print(response)
