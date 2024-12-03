@@ -27,7 +27,7 @@ def describe_pptx(pptx_path):
 
     # Initialize the Groq client
     client = Groq(api_key=GROQ_API_KEY)
-    summary_instruction = "fasse die folgenden informationen auf deutsch zusammen ohne informationen hinzuzufügen"
+    summary_instruction = "Fasse die Informationen aus dem folgenden Inhalt einer Presentation kurz zusammen."
 
     # Loop through each slide in the presentation
     for slide_num, slide in enumerate(prs.slides):
@@ -52,7 +52,7 @@ def describe_pptx(pptx_path):
                         "role": "user",
                         "content": [
                             {
-                                "type": "text", "text": "fasse wichtige inhalte aus dem Bild kurz zusammen Füge keine neuen informationen hinzu. Wenn keine Informationen da sind, gebe nichts zurück"
+                                "type": "text", "text": "Erstelle einen ALT-Text für das folgende Bild."
                             },
                             {
                         "type": "image_url",
@@ -73,7 +73,7 @@ def describe_pptx(pptx_path):
         summary_input = [
                 {
 
-                    "role": "user",
+                    "role": "system",
 
                     "content": summary_instruction,
 
@@ -91,13 +91,15 @@ def describe_pptx(pptx_path):
                     }
                     )
         print(summary_input, '\n\n')
-
-        chat_completion = client.chat.completions.create(
+        try:
+          chat_completion = client.chat.completions.create(
             messages=summary_input,
 
             model="llama3-8b-8192",
-        )
-        response.append(chat_completion.choices[0].message.content)
+          )
+          response.append(chat_completion.choices[0].message.content)
+        except:
+          Raise Exception("Something went wrong with the summary API request")
         summary_input.clear()
         slide_content.clear()
     print(response)
