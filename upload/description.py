@@ -27,12 +27,13 @@ def encode_image(image_stream):
 
 
 
-def save_text(text_to_save):
+def save_text(text_to_save, file_name="full_text.txt"):
+    text_to_save = text_to_save.replace("¨a", "ä").replace("¨o", "ö").replace("¨u", "ü").replace("¨A", "Ä").replace("¨O", "Ö").replace("¨U", "Ü")
     print("save function running")
-    full_text_path = Path(__file__).parent / "full_text.txt"
+    full_text_path = Path(__file__).parent / file_name
     if not full_text_path.exists():
         full_text_path.touch()
-    with open(full_text_path, "a") as file:
+    with open(full_text_path, "a", encoding="UTF-8") as file:
         file.write(text_to_save)
     return None
 
@@ -84,6 +85,7 @@ def summarize(long_text, prompt):
 
 def describe_pdf(pdf, short_response=False, max_length=3000, store_content=False):
     pdf_stream = io.BytesIO(pdf.read())
+    print(pdf.name)
     image_prompt = "Das folgende Bild ist Teil einer Presentation, fasse zentrale Inhalte des Bildes in maximal 100 Worten zusammen, ohne Information hinzuzufügen"
     summary_prompt = "du fasst die wichtigsten informationen eines Textes auf deutsch in ganzen sätzen zusammen. Füge keine Informationen hinzu. gebe nur die Zusammenfassung zurück. Füge keine Textformatierung hinzu."
     pdf_document = fitz.open(stream=pdf_stream, filetype="pdf")
@@ -91,9 +93,9 @@ def describe_pdf(pdf, short_response=False, max_length=3000, store_content=False
     for page_num in range(pdf_document.page_count):
         text = ""
         page = pdf_document[page_num]
-        text += page.get_text()
+        text += page.get_text().encode("utf-8").decode("utf-8")
         image_list = page.get_images(full=True)
-        for img_index, img in enumerate(image_list):
+        for img in image_list:
             xref = img[0]
             base_image = pdf_document.extract_image(xref)
             image_bytes = base_image["image"]
@@ -101,25 +103,30 @@ def describe_pdf(pdf, short_response=False, max_length=3000, store_content=False
             text += describe_image(image_stream, image_prompt)
         response += summarize(text, summary_prompt)
         if store_content:
-            save_text(text)
+            file_name = str(os.path.splitext(pdf.name)[0])+".txt"
+            save_text(text, file_name)
     pdf_document.close()
     summary = response
     if len(response) > max_length and short_response:
             logging.warning("Die Länge der Zusammenfassung könnte zu Problemen führen, daher wird diese in Abschnitten erneut zusammengefasst")
             summary = summarize(response, summary_prompt)
+    pdf_stream.close()
     return summary
 
 
 
 def describe_pptx(pptx, short_response=False, max_length=3000, store_content=False):
     pptx_bytes = pptx.read()
+    print(pptx.name)
     pptx_stream = io.BytesIO(pptx_bytes)
     # Save the uploaded file temporarily
     with tempfile.NamedTemporaryFile(delete=False, suffix=".pptx") as temp_file:
         temp_file.write(pptx_stream.read())
         temp_file_path = temp_file.name  # Get the path of the temporary file
     # Load the PowerPoint presentation
+    pptx_stream.close()
     prs = Presentation(temp_file_path)
+    os.remove(temp_file_path)  # Remove the temporary file
     response = ""
     image_prompt = "Das folgende Bild ist Teil einer Presentation, fasse zentrale Inhalte des Bildes in maximal 100 Worten zusammen, ohne Information hinzuzufügen"
     # Instruction for summarizing the content of a presentation slide in German
@@ -127,7 +134,7 @@ def describe_pptx(pptx, short_response=False, max_length=3000, store_content=Fal
     if len(prs.slides) > 20:
         logging.warning("The length of this presentation might cause issues with the token limit.")
 
-    for slide_number,slide in enumerate(prs.slides):
+    for slide in prs.slides:
         slide_content = ""
         # Position elements
         for shape in slide.shapes:
@@ -142,7 +149,8 @@ def describe_pptx(pptx, short_response=False, max_length=3000, store_content=Fal
 
         response += summarize(slide_content, summary_prompt)
         if store_content:
-            save_text(slide_content)
+            file_name = str(os.path.splitext(pptx.name)[0])+".txt"
+            save_text(slide_content, file_name)
     summary = response
     if len(response) > max_length and short_response:
             logging.warning("Die Länge der Zusammenfassung könnte zu Problemen führen, daher wird diese in Abschnitten erneut zusammengefasst")
@@ -154,4 +162,16 @@ pptx_path = r"C:\Users\Jonas\Downloads\schlacht-bei-tannenberg(1).pptx"
 #with open(pptx_path, 'rb') as source:
 #    document = source.read()
 #    print(describe_pptx(document))
+
+def describe_file(file, short_response=False, max_length=3000, store_content=False):
+    suffix = Path(file.name).suffix
+    if suffix in allowed_paths:
+        try:
+            description_function = globals()[f"describe_{suffix[1:]}"]
+            description = description_function(file, short_response, max_length, store_content)
+        except KeyError:
+            raise ValueError(f"No function found to describe files with suffix {suffix}.")
+    else:
+        raise ValueError("The file type is not supported.")
+    return description
 
