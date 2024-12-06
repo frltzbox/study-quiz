@@ -225,9 +225,10 @@ if st.button("Fragen und Transkript generieren"):
             video_id = extract_youtube_video_id(youtube_url)
             text = get_video_transcript(video_id)
     if uploaded_file is not None:
-        pdf_description = "\n **Folgende Zusammenfassung wurde aus der hochgeladenen Datei generiert:** \n"
-        pdf_description += description.describe_file(uploaded_file)
-        text = text + pdf_description
+        with st.spinner('Analysiere Hochgeladene Datei...'):
+            pdf_description = "\n **Folgende Zusammenfassung wurde aus der hochgeladenen Datei generiert:** \n"
+            pdf_description += description.describe_file(uploaded_file)
+            text = text + pdf_description
 
     if len(text) < 50:
         st.error("Transkript ist zu kurz, um Fragen generieren zu können.")    
@@ -270,7 +271,7 @@ if st.button("Fragen und Transkript generieren"):
             
             markdown_file = 'input.md'
             with open(markdown_file, 'w') as f:
-                f.write(formatted_transcription)
+                f.write(formatted_transcription, encoding='utf-8')
             
             # Convert markdown to PDF
             document = Document()
