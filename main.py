@@ -19,6 +19,7 @@ import re
 import pandas as pd
 from io import StringIO
 from upload import description
+import tempfile
 
 # Set parameters
 sample_rate = 44100  # Sample rate in Hertz (CD quality)
@@ -226,7 +227,7 @@ if st.button("Fragen und Transkript generieren"):
             text = get_video_transcript(video_id)
     if uploaded_file is not None:
         with st.spinner('Analysiere Hochgeladene Datei...'):
-            pdf_description = "\n **Folgende Zusammenfassung wurde aus der hochgeladenen Datei generiert:** \n"
+            pdf_description = " \n **Folgende Zusammenfassung wurde aus der hochgeladenen Datei generiert:** \n "
             pdf_description += description.describe_file(uploaded_file)
             text = text + pdf_description
 
@@ -263,19 +264,17 @@ if st.button("Fragen und Transkript generieren"):
             """,
             unsafe_allow_html=True
         )
-        markdown_file = 'input.md'
-        with open(markdown_file, 'w') as f:
-            f.write(formatted_transcription)
 
         if formatted_transcription:
-            
-            markdown_file = 'input.md'
-            with open(markdown_file, 'w') as f:
-                f.write(formatted_transcription, encoding='utf-8')
+                        # Create a temporary markdown file
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".md") as temp_md_file:
+                temp_md_file.write(formatted_transcription.encode('utf-8'))
+                markdown_file = temp_md_file.name
             
             # Convert markdown to PDF
             document = Document()
-            document.LoadFromFile(os.path.abspath(markdown_file))
+            document.LoadFromFile(markdown_file)
+            
             output_pdf = 'ToPdf.pdf'
             document.SaveToFile(output_pdf, FileFormat.PDF)
             document.Dispose()
@@ -283,7 +282,13 @@ if st.button("Fragen und Transkript generieren"):
             # Read PDF file
             with open(output_pdf, 'rb') as f:
                 pdf_data = f.read()
-            
+            os.remove(output_pdf)
+            st.download_button(
+                label='Download PDF',
+                data=pdf_data,
+                file_name='transcription.pdf',
+                mime='application/pdf'
+            )
             st.download_button(
                 label='Download PDF',
                 data=pdf_data,
