@@ -9,10 +9,18 @@ from pptx.enum.shapes import MSO_SHAPE_TYPE
 import tempfile
 from pathlib import Path
 
-allowed_paths = [".pptx", ".pdf"]
 
 
 def api_setup():
+    """
+    Sets up the Groq API client using the GROQ_API_KEY environment variable.
+
+    Returns:
+        client: An initialized Groq client object.
+
+    Raises:
+        ValueError: If the GROQ_API_KEY environment variable is not set.
+    """
     GROQ_API_KEY = os.getenv('GROQ_API_KEY')
     if GROQ_API_KEY is None:
         raise ValueError("The GROQ_API_KEY environment variable is not set.")
@@ -23,11 +31,30 @@ def api_setup():
 
 
 def encode_image(image_stream):
+    """
+    Encodes an image stream to a base64 string.
+
+    Args:
+        image_stream (io.BytesIO): A binary stream of the image to be encoded.
+
+    Returns:
+        str: The base64 encoded string of the image.
+    """
     return base64.b64encode(image_stream.read()).decode('utf-8')
 
 
 
 def save_text(text_to_save, file_name="full_text.txt"):
+    """
+    Saves the given text to a file, replacing specific placeholder characters with their corresponding German umlaut characters.
+
+    Args:
+        text_to_save (str): The text to be saved, with placeholders for umlaut characters.
+        file_name (str, optional): The name of the file to save the text to. Defaults to "full_text.txt".
+
+    Returns:
+        None
+    """
     text_to_save = text_to_save.replace("¨a", "ä").replace("¨o", "ö").replace("¨u", "ü").replace("¨A", "Ä").replace("¨O", "Ö").replace("¨U", "Ü")
     print("save function running")
     full_text_path = Path(__file__).parent / file_name
@@ -35,9 +62,24 @@ def save_text(text_to_save, file_name="full_text.txt"):
         full_text_path.touch()
     with open(full_text_path, "a", encoding="UTF-8") as file:
         file.write(text_to_save)
-    return None
+
+
+
 
 def describe_image(image_stream, prompt):
+    """
+    Generates a description of an image based on a given prompt using an AI model.
+
+    Args:
+        image_stream (io.BytesIO): The image data stream to be described.
+        prompt (str): The text prompt to guide the description.
+
+    Returns:
+        str: The generated description of the image, or None if an error occurs.
+
+    Raises:
+        Exception: If there is an error during the API request.
+    """
     client = api_setup()
     base64_image = encode_image(image_stream)
     try:
@@ -60,6 +102,20 @@ def describe_image(image_stream, prompt):
 
 
 def summarize(long_text, prompt):
+    """
+    Summarizes a given long text using a specified prompt.
+
+    Args:
+        long_text (str): The text to be summarized.
+        prompt (str): The prompt to guide the summarization.
+
+    Returns:
+        str: The summarized text if the API request is successful.
+        None: If there is an error during the API request.
+
+    Raises:
+        Exception: If there is an error during the summary API request.
+    """
     client = api_setup()
     try:
         chat_completion = client.chat.completions.create(
@@ -84,6 +140,18 @@ def summarize(long_text, prompt):
 
 
 def describe_pdf(pdf, short_response=False, max_length=3000, store_content=False):
+    """
+    Extracts text and images from a PDF file, summarizes the content, and optionally stores the extracted text.
+
+    Args:
+        pdf (file-like object): The PDF file to be described.
+        short_response (bool, optional): If True, the summary will be shortened if it exceeds max_length. Defaults to False.
+        max_length (int, optional): The maximum length of the summary. Defaults to 3000.
+        store_content (bool, optional): If True, the extracted text will be saved to a file. Defaults to False.
+
+    Returns:
+        str: The summarized content of the PDF.
+    """
     pdf_stream = io.BytesIO(pdf.read())
     print(pdf.name)
     image_prompt = "Das folgende Bild ist Teil einer Presentation, fasse zentrale Inhalte des Bildes in maximal 100 Worten zusammen, ohne Information hinzuzufügen"
@@ -116,6 +184,23 @@ def describe_pdf(pdf, short_response=False, max_length=3000, store_content=False
 
 
 def describe_pptx(pptx, short_response=False, max_length=3000, store_content=False):
+    """
+    Describes the content of a PowerPoint presentation file.
+    Args:
+        pptx (file-like object): The PowerPoint presentation file to be described.
+        short_response (bool, optional): If True, the response will be summarized to fit within the max_length. Defaults to False.
+        max_length (int, optional): The maximum length of the response. Defaults to 3000.
+        store_content (bool, optional): If True, the content of each slide will be saved to a text file. Defaults to False.
+    Returns:
+        str: A summary of the PowerPoint presentation content.
+    Raises:
+        Warning: If the presentation has more than 20 slides, a warning is logged about potential token limit issues.
+    Notes:
+        - The function reads the PowerPoint file, extracts text and image content from each slide, and summarizes it.
+        - If the presentation has more than 20 slides, a warning is logged.
+        - If store_content is True, the content of each slide is saved to a text file.
+        - If the response exceeds max_length and short_response is True, the response is further summarized.
+    """
     pptx_bytes = pptx.read()
     print(pptx.name)
     pptx_stream = io.BytesIO(pptx_bytes)
@@ -157,13 +242,27 @@ def describe_pptx(pptx, short_response=False, max_length=3000, store_content=Fal
             summary = summarize(response, summary_prompt)
     return summary
 
-pdf_path = r'C:\Users\Jonas\Downloads\2023.03.02_BROSCH_NEU_NUR_WEB_gym_Oberstufe_v12_WEB.pdf'
-pptx_path = r"C:\Users\Jonas\Downloads\schlacht-bei-tannenberg(1).pptx"
-#with open(pptx_path, 'rb') as source:
-#    document = source.read()
-#    print(describe_pptx(document))
+
+
+allowed_paths = [".pptx", ".pdf"]
+
 
 def describe_file(file, short_response=False, max_length=3000, store_content=False):
+    """
+    Describes the content of a given file based on its suffix.
+
+    Args:
+        file (File): The file to be described.
+        short_response (bool, optional): If True, returns a shorter description. Defaults to False.
+        max_length (int, optional): The maximum length of the description, only applies if short_response. Defaults to 3000.
+        store_content (bool, optional): If True, stores the content of the file. Defaults to False.
+
+    Returns:
+        str: The description of the file content.
+
+    Raises:
+        ValueError: If the file type is not supported or no function is found to describe the file.
+    """
     suffix = Path(file.name).suffix
     if suffix in allowed_paths:
         try:
