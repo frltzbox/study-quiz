@@ -289,9 +289,3 @@ if st.button("Fragen und Transkript generieren"):
                 file_name='transcription.pdf',
                 mime='application/pdf'
             )
-            st.download_button(
-                label='Download PDF',
-                data=pdf_data,
-                file_name='transcription.pdf',
-                mime='application/pdf'
-            )
