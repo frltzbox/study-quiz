@@ -18,7 +18,7 @@ from youtube_transcript_api import YouTubeTranscriptApi, TranscriptsDisabled
 import re
 import pandas as pd
 from io import StringIO
-from upload import pdf
+from upload import description
 
 # Set parameters
 sample_rate = 44100  # Sample rate in Hertz (CD quality)
@@ -181,53 +181,56 @@ if st.button("Fragen und Transkript generieren"):
     text = ""
     if youtube_url == "":
         with st.spinner('Analysiere Audio...'):
-            # Specify the path to the audio file
-            filename = os.path.dirname(__file__) + "/audio.wav"
-            print("Analysiere Audio...")
+            try:
+                # Specify the path to the audio file
+                filename = os.path.dirname(__file__) + "/audio.wav"
+                print("Analysiere Audio...")
 
-            # Check file size
-            file_size_mb = os.path.getsize(filename) / (1024 * 1024)
-            
-            # If file is larger than 25MB, convert to MP3
-            if file_size_mb > 25:
-                print("Konvertiere große WAV Datei zu MP3...")
-                audio = AudioSegment.from_wav(filename)
-                mp3_filename = filename.replace('.wav', '.mp3')
-                audio.export("audio.mp3", format="mp3", bitrate="128k")
-                process_filename = mp3_filename
-                print("Audio konvertiert")
-            else:
-                process_filename = filename
-
-            # Open the audio file
-            with open(process_filename, "rb") as file:
-                # Create a transcription
-                transcription = client.audio.transcriptions.create(
-                    file=(process_filename, file.read()),
-                    model="whisper-large-v3-turbo",
-                    language="de",
-                    temperature=0.0
-                )
+                # Check file size
+                file_size_mb = os.path.getsize(filename) / (1024 * 1024)
                 
-                # Print the transcription text
-                print(transcription.text)
-                text = transcription.text
+                # If file is larger than 25MB, convert to MP3
+                if file_size_mb > 25:
+                    print("Konvertiere große WAV Datei zu MP3...")
+                    audio = AudioSegment.from_wav(filename)
+                    mp3_filename = filename.replace('.wav', '.mp3')
+                    audio.export("audio.mp3", format="mp3", bitrate="128k")
+                    process_filename = mp3_filename
+                    print("Audio konvertiert")
+                else:
+                    process_filename = filename
 
-            # Clean up temporary MP3 if it was created
-            #if file_size_mb > 25:
-            #    os.remove(mp3_filename)
+                # Open the audio file
+                with open(process_filename, "rb") as file:
+                    # Create a transcription
+                    transcription = client.audio.transcriptions.create(
+                        file=(process_filename, file.read()),
+                        model="whisper-large-v3-turbo",
+                        language="de",
+                        temperature=0.0
+                    )
+                    
+                    # Print the transcription text
+                    print(transcription.text)
+                    text = transcription.text
+
+                # Clean up temporary MP3 if it was created
+                #if file_size_mb > 25:
+                #    os.remove(mp3_filename)
+            except Exception as e:
+                print(e)
+                st.error("Fehler beim Analysieren der Audio-Datei. Bitte versuchen Sie es erneut.")
     else:
         with st.spinner('Analysiere YouTube Video...'):
             video_id = extract_youtube_video_id(youtube_url)
             text = get_video_transcript(video_id)
     if uploaded_file is not None:
-        bytes_data = uploaded_file.getvalue()
-        pdf_description = "Mit der folgenden zusammenfassung der präsentationsfolien: "
-        pdf_description = pdf_description + pdf.pdfinfo(bytes_data)
+        pdf_description = "\n **Folgende Zusammenfassung wurde aus der hochgeladenen Datei generiert:** \n"
+        pdf_description += description.describe_file(uploaded_file)
         text = text + pdf_description
 
     if len(text) < 50:
-        st.error("Transkript ist zu kurz, um Fragen generieren zu können. Bitte versuchen Sie es erneut.")    
+        st.error("Transkript ist zu kurz, um Fragen generieren zu können.")    
     else:
         with st.spinner('Generiere Fragen...'):
             result = generate_questions_answers(text)
