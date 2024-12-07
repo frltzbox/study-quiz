@@ -1,6 +1,9 @@
 TODO.txt
 ToPdf.pdf
 .env
-_pycache_
 upload/__pycache__
 upload/scratch.py
+/__pycache__
+.gitignore
+/devcontainer
+.devcontainer/devcontainer.json
