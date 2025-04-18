@@ -47,7 +47,7 @@ Ensure you have the following libraries installed:
 
 1. Clone this repository:
     ```bash
-    git clone https://github.com/your_username/study-quiz.git
+    git clone https://github.com/frltzbox/study-quiz.git
     cd study-quiz
     ```
 
