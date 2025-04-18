@@ -8,3 +8,5 @@ pydub
 youtube-transcript-api
 Spire.Doc
 frontend 
+scipy 
+markdown-pdf
